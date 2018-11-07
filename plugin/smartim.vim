@@ -60,9 +60,31 @@ function! Smartim_SelectDefault()
     return
   endif
 
-  silent let b:saved_im = system(s:imselect_path . g:smartim_default)
+  if has('nvim')
+    let s:chunks = ['']
+    function! s:OnEvent(job_id, data, event) dict
+      if a:event == 'stdout'
+          let s:chunks[-1] .= a:data[0]
+          call extend(s:chunks, a:data[1:])
+      elseif a:event == 'exit'
+        let b:saved_im = join(s:chunks)
+        call Smartim_debug_print('b:saved_im = ' . b:saved_im)
+      endif
+    endfunction
+    let s:callbacks = {
+    \ 'on_stdout': function('s:OnEvent'),
+    \ 'on_stderr': function('s:OnEvent'),
+    \ 'on_exit': function('s:OnEvent')
+    \ }
+    let s:job = jobstart(s:imselect_path . g:smartim_default, extend({}, s:callbacks))
+  else
+    function! Smartim_GetDefault(channel, msg)
+      let b:saved_im = a:msg
+      call Smartim_debug_print('b:saved_im = ' . b:saved_im)
+    endfunction
+    let s:job = job_start(s:imselect_path . g:smartim_default, {'callback': "Smartim_GetDefault"})
+  endif
 
-  call Smartim_debug_print('b:saved_im = ' . b:saved_im)
   call Smartim_debug_print('<<< Smartim_SelectDefault returned ' . v:shell_error)
 endfunction
 
@@ -74,7 +96,11 @@ function! Smartim_SelectSaved()
   endif
 
   if exists("b:saved_im")
-    silent call system(s:imselect_path . b:saved_im)
+    if has('nvim')
+      let s:job = jobstart(s:imselect_path . b:saved_im)
+    else
+      let s:job = job_start(s:imselect_path . b:saved_im)
+    endif
     call Smartim_debug_print('b:saved_im = ' . b:saved_im)
     call Smartim_debug_print('<<< Smartim_SelectSaved returned ' . v:shell_error)
   else
