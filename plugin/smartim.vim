@@ -82,11 +82,46 @@ function! Smartim_SelectSaved()
   endif
 endfunction
 
+let s:action = 1
+function! CheckedApply(func)
+  if s:action
+    call a:func()
+  endif
+endfunction
+
+let s:timer = -1
+function! SwitchIM(use_saved)
+    call timer_pause(s:timer, 1)
+    let l:info = timer_info(s:timer)
+    if !empty(l:info)
+      if l:info[0].repeat != 0 "seem useless
+        let s:action = s:applying_saved == a:use_saved
+      endif
+      call timer_pause(s:timer, 0)
+    else
+      let s:action = 1
+      if a:use_saved
+        let s:applying_saved = 1
+        let s:timer = timer_start(100, {-> CheckedApply(function('Smartim_SelectSaved'))})
+      else
+        let s:applying_saved = 0
+        let s:timer = timer_start(100, {-> CheckedApply(function('Smartim_SelectDefault'))})
+      endif
+    endif
+endfunction
+
 augroup smartim
   autocmd!
-  autocmd VimLeavePre * call Smartim_SelectDefault()
-  autocmd InsertLeave * call Smartim_SelectDefault()
-  autocmd InsertEnter * call Smartim_SelectSaved()
+  autocmd VimLeavePre * call SwitchIM(0)
+  autocmd InsertLeave * call SwitchIM(0)
+  autocmd InsertEnter * call SwitchIM(1)
 augroup end
+
+"augroup smartim
+"  autocmd!
+"  autocmd VimLeavePre * call Smartim_SelectDefault()
+"  autocmd InsertLeave * call Smartim_SelectDefault()
+"  autocmd InsertEnter * call Smartim_SelectSaved()
+"augroup end
 
 " vim:ts=2:sw=2:sts=2
