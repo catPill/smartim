@@ -60,8 +60,7 @@ function! Smartim_SelectDefault()
     return
   endif
 
-  silent let b:saved_im = system(s:imselect_path)
-  silent call system(s:imselect_path . g:smartim_default)
+  silent let b:saved_im = system(s:imselect_path . g:smartim_default)
 
   call Smartim_debug_print('b:saved_im = ' . b:saved_im)
   call Smartim_debug_print('<<< Smartim_SelectDefault returned ' . v:shell_error)
