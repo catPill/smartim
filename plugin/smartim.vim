@@ -117,13 +117,9 @@ endfunction
 
 let s:timer = -1
 function! SwitchIM(use_saved)
-    call timer_pause(s:timer, 1)
     let l:info = timer_info(s:timer)
     if !empty(l:info)
-      if l:info[0].repeat != 0 "seem useless
-        let s:action = s:applying_saved == a:use_saved
-      endif
-      call timer_pause(s:timer, 0)
+      let s:action = s:applying_saved == a:use_saved
     else
       let s:action = 1
       if a:use_saved
